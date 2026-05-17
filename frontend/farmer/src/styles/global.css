@@ -1,0 +1,170 @@
+/* ═══════════════════════════════════════════
+   AgriSpatial AI — Global Styles v2.0
+   ═══════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: var(--weight-normal);
+  color: var(--gis-text);
+  background: var(--gis-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  line-height: var(--leading-normal);
+  letter-spacing: var(--tracking-normal);
+}
+
+#app {
+  height: 100%;
+}
+
+/* ══════ Scrollbar ══════ */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.12);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.22); }
+
+/* dark scrollbar */
+.gis-shell ::-webkit-scrollbar-thumb,
+.dark-scroll ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+}
+.gis-shell ::-webkit-scrollbar-thumb:hover,
+.dark-scroll ::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ══════ Selection ══════ */
+::selection {
+  background: rgba(46, 200, 93, 0.15);
+  color: inherit;
+}
+
+/* ══════ Links ══════ */
+a {
+  color: var(--color-primary-300);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+a:hover { color: var(--color-primary-200); }
+
+/* ══════ Form Resets ══════ */
+input, select, textarea, button {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  color: inherit;
+}
+input:focus, select:focus, textarea:focus { outline: none; }
+
+/* ══════ Light Page Overlay ══════ */
+.page-light {
+  background: var(--surface-50);
+  color: var(--surface-900);
+  min-height: 100vh;
+  overflow-y: auto;
+}
+.page-light h1, .page-light h2, .page-light h3, .page-light h4 {
+  color: var(--surface-900);
+}
+
+/* ══════ Smooth Page Entry ══════ */
+@keyframes pageEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: pageEnter var(--duration-slower) var(--ease-out) both;
+}
+
+/* ══════ Text Utilities ══════ */
+.text-success  { color: var(--color-success); }
+.text-warning  { color: var(--color-warning); }
+.text-danger   { color: var(--color-danger); }
+.text-data     { color: var(--data-blue); }
+.text-muted    { color: var(--gis-text-muted); }
+.text-dim      { color: var(--gis-text-dim); }
+.text-primary  { color: var(--color-primary); }
+
+.text-xs   { font-size: var(--text-xs); }
+.text-sm   { font-size: var(--text-sm); }
+.text-base { font-size: var(--text-base); }
+.text-md   { font-size: var(--text-md); }
+.text-lg   { font-size: var(--text-lg); }
+.text-xl   { font-size: var(--text-xl); }
+.text-2xl  { font-size: var(--text-2xl); }
+.text-3xl  { font-size: var(--text-3xl); }
+.text-4xl  { font-size: var(--text-4xl); }
+
+.text-mono   { font-family: var(--font-mono); }
+.text-upper  { text-transform: uppercase; letter-spacing: var(--tracking-wider); }
+.text-tight  { letter-spacing: var(--tracking-tight); }
+.text-center { text-align: center; }
+
+.font-normal   { font-weight: var(--weight-normal); }
+.font-medium   { font-weight: var(--weight-medium); }
+.font-semibold { font-weight: var(--weight-semibold); }
+.font-bold     { font-weight: var(--weight-bold); }
+
+/* ══════ Flex Utilities ══════ */
+.flex           { display: flex; }
+.flex-col       { flex-direction: column; }
+.flex-1         { flex: 1; }
+.flex-wrap      { flex-wrap: wrap; }
+.items-center   { align-items: center; }
+.items-start    { align-items: flex-start; }
+.items-end      { align-items: flex-end; }
+.justify-between { justify-content: space-between; }
+.justify-center  { justify-content: center; }
+.justify-end     { justify-content: flex-end; }
+
+.gap-xs  { gap: var(--space-1); }
+.gap-sm  { gap: var(--space-2); }
+.gap-md  { gap: var(--space-3); }
+.gap-lg  { gap: var(--space-4); }
+.gap-xl  { gap: var(--space-5); }
+.gap-2xl { gap: var(--space-6); }
+
+/* ══════ Skeleton Loading ══════ */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--surface-200) 25%, var(--surface-100) 50%, var(--surface-200) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ══════ Number Counter Animation ══════ */
+@keyframes countUp {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.count-up {
+  animation: countUp var(--duration-slower) var(--ease-out) both;
+}

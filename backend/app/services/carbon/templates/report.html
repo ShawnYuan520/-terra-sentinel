@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 2cm; @bottom-center { content: "AgriSpatial AI · 智慧农业空间智能平台"; font-size: 9px; color: #999; } }
+  body { font-family: "SimSun", "Microsoft YaHei", sans-serif; color: #333; line-height: 1.6; }
+  .header { text-align: center; border-bottom: 3px solid #07c160; padding-bottom: 16px; margin-bottom: 24px; }
+  .header h1 { color: #07c160; margin: 0; font-size: 24px; }
+  .header .sub { color: #666; font-size: 14px; margin-top: 4px; }
+  .section { margin-bottom: 20px; }
+  .section h2 { color: #07c160; font-size: 16px; border-left: 4px solid #07c160; padding-left: 8px; margin-bottom: 10px; }
+  .info-table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+  .info-table td { padding: 6px 10px; border: 1px solid #e0e0e0; }
+  .info-table td:first-child { background: #f5f5f5; font-weight: bold; width: 120px; }
+  .highlight { background: #e8f5e9; padding: 12px; border-radius: 4px; margin: 10px 0; }
+  .highlight .value { font-size: 28px; font-weight: bold; color: #07c160; }
+  .highlight .unit { font-size: 14px; color: #666; }
+  .chart-box { text-align: center; padding: 12px; border: 1px dashed #ddd; margin: 12px 0; color: #999; }
+  .ai-box { background: #f8f9fa; border: 1px solid #e0e0e0; padding: 14px; border-radius: 6px; margin: 12px 0; }
+  .ai-box .label { color: #07c160; font-weight: bold; margin-bottom: 6px; }
+  .footer { margin-top: 30px; font-size: 11px; color: #999; text-align: center; border-top: 1px solid #eee; padding-top: 10px; }
+  .warn { color: #e67e22; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>碳汇报告</h1>
+  <div class="sub">AgriSpatial AI · 秸秆还田碳汇评估</div>
+</div>
+
+<div class="section">
+  <h2>地块信息</h2>
+  <table class="info-table">
+    <tr><td>地块名称</td><td>{field_name}</td></tr>
+    <tr><td>地块 ID</td><td>{field_id}</td></tr>
+    <tr><td>作物类型</td><td>{crop_type}</td></tr>
+    <tr><td>面积（公顷）</td><td>{area_ha}</td></tr>
+    <tr><td>报告周期</td><td>{period_start} ~ {period_end}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2>碳汇数据</h2>
+  <div class="highlight">
+    <div class="value">{carbon_amount} <span class="unit">tCO₂e</span></div>
+    <div>碳固定量</div>
+  </div>
+  <table class="info-table">
+    <tr><td>秸秆还田量</td><td>{straw_amount} 吨</td></tr>
+    <tr><td>碳转换系数</td><td>0.4 tCO₂e / 吨秸秆</td></tr>
+    <tr><td>土壤有机质</td><td>{organic_matter} g/kg</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2>NDVI 遥感分析</h2>
+  <div class="chart-box">
+    [ NDVI 时序曲线图 ]<br/>
+    <small>均值: {mean_ndvi} · 趋势: {ndvi_trend}</small>
+  </div>
+</div>
+
+<div class="section">
+  <h2>天气数据</h2>
+  <table class="info-table">
+    <tr><td>当前温度</td><td>{temperature}°C</td></tr>
+    <tr><td>湿度</td><td>{humidity}%</td></tr>
+    <tr><td>降雨量</td><td>{precipitation} mm</td></tr>
+    <tr><td>天气状况</td><td>{description}</td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2>AI 智能分析</h2>
+  <div class="ai-box">
+    <div class="label">AgriSpatial AI 分析：</div>
+    <p>{ai_analysis}</p>
+  </div>
+</div>
+
+<div class="section">
+  <h2>建议与展望</h2>
+  <p>{recommendations}</p>
+</div>
+
+<div class="footer">
+  <p>本报告由 AgriSpatial AI 自动生成 · 生成时间: {report_date}</p>
+  <p>报告编号: {report_id} · 数据来源: Landsat 8 / OpenWeather</p>
+  <p class="warn">声明：本报告仅供参考，不构成碳排放权交易凭证。碳汇量依据《秸秆还田固碳核算方法》估算。</p>
+</div>
+
+</body>
+</html>

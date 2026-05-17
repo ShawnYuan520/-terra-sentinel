@@ -1,0 +1,65 @@
+# Python
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Environment files (secrets!)
+.env
+.env.*
+!.env.example
+
+# Database files
+*.db
+*.sqlite3
+
+# Google Earth Engine credentials
+gee-service-account.json
+*.json.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node
+node_modules/
+frontend/farmer/dist/
+
+# Raster data (large files, download separately)
+demo_data/*.tif
+demo_data/*.tiff
+
+# Alembic
+alembic/versions/*.py
+!alembic/versions/__init__.py
+
+# Logs
+*.log
+.wrangler/
+
+# Docker volumes
+pgdata/
+
+# Test files
+test_api*.py
+test_results.txt
+
+# Raster data directory (31GB)
+backend/demo_data/
