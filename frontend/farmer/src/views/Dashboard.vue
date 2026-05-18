@@ -157,8 +157,8 @@
       <div class="cta-content">
         <h2>准备好让秸秆变碳汇了吗</h2>
         <p>免费注册，画一块地，看看你的田适合哪种腐解剂</p>
-        <router-link to="/register" class="btn-primary-hero">免费注册</router-link>
-        <p class="cta-sub">已有账号？<router-link to="/login">立即登录</router-link></p>
+        <a href="/register" class="btn-primary-hero" @click.prevent="$router.push('/register')">免费注册</a>
+        <p class="cta-sub">已有账号？<a href="/login" @click.prevent="$router.push('/login')">立即登录</a></p>
       </div>
     </section>
 
@@ -618,7 +618,7 @@ const workflow = [
 .cta h2 { font-size: clamp(32px, 5vw, 48px); color: #fff; margin-bottom: 16px; font-weight: 900; letter-spacing: -0.03em; }
 .cta p { color: rgba(255,255,255,0.45); margin-bottom: 40px; font-size: 17px; }
 .cta-sub { margin-top: 24px; font-size: 13px; color: rgba(255,255,255,0.25); }
-.cta-sub a { color: #4ADE80; font-weight: 600; }
+.cta-sub a { color: #4ADE80; font-weight: 600; cursor: pointer; text-decoration: underline; }
 
 /* ══════ Footer ══════ */
 .footer { padding: 64px 24px 48px; background: #0C1117; }
