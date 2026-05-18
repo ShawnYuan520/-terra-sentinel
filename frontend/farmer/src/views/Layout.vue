@@ -17,8 +17,6 @@
         <router-link to="/map/knowledge" class="nav-link">知识库</router-link>
         <router-link to="/map/settings" class="nav-link">设置</router-link>
         <router-link to="/map/help" class="nav-link">帮助</router-link>
-        <router-link v-if="!isLoggedIn" to="/login" class="nav-link nav-login">登录</router-link>
-        <a v-if="isLoggedIn" href="#" class="nav-link nav-login" @click.prevent="handleLogout">退出</a>
       </nav>
     </header>
 
@@ -84,7 +82,7 @@
 
 <script setup>
 import { onMounted, computed } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import api from '../api'
 import { provideStore, provideSelectFieldFn } from '../stores/appStore'
 import LayerToggle from '../components/LayerToggle.vue'
@@ -95,14 +93,7 @@ import ChartsMini from '../components/ChartsMini.vue'
 import { ArrowRight, MapPin } from 'lucide-vue-next'
 
 const route = useRoute()
-const router = useRouter()
 const isMapView = computed(() => route.name === 'MapView')
-const isLoggedIn = computed(() => !!localStorage.getItem('token'))
-
-function handleLogout() {
-  localStorage.removeItem('token')
-  router.push('/login')
-}
 const provider = provideStore()
 const store = { state: provider.state, actions: provider }
 

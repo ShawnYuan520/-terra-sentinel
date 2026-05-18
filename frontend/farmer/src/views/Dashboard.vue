@@ -16,8 +16,6 @@
         <div class="hero-actions">
           <router-link to="/map" class="btn-primary-hero">进入 GIS 平台</router-link>
           <a href="#decomposer" class="btn-outline-hero">了解腐解剂</a>
-          <router-link v-if="!isLoggedIn" to="/login" class="btn-outline-hero"><LogIn :size="14" /> 登录</router-link>
-          <router-link v-if="!isLoggedIn" to="/register" class="btn-outline-hero"><UserPlus :size="14" /> 注册</router-link>
         </div>
       </div>
       <div class="hero-scroll-hint">
@@ -192,10 +190,8 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue'
-import { ArrowRight, ChartBar, ClipboardList, CloudSun, FlaskConical, Globe, LogIn, SatelliteDish, Sparkles, UserPlus } from 'lucide-vue-next'
-
-const isLoggedIn = computed(() => !!localStorage.getItem('token'))
+import { onMounted, onUnmounted, ref } from 'vue'
+import { ArrowRight, ChartBar, ClipboardList, CloudSun, FlaskConical, Globe, SatelliteDish, Sparkles } from 'lucide-vue-next'
 // Dashboard 是独立全宽页面，需要覆盖全局的 overflow:hidden
 onMounted(() => {
   document.documentElement.style.overflow = 'auto'
