@@ -3,22 +3,21 @@ import { createRouter, createWebHistory } from 'vue-router'
 const routes = [
   { path: '/login', name: 'Login', component: () => import('../views/Login.vue') },
   { path: '/register', name: 'Register', component: () => import('../views/Register.vue') },
-  // 首页 — 概览（无侧边栏，全宽展示）
-  { path: '/', name: 'Dashboard', component: () => import('../views/Dashboard.vue'), meta: { requiresAuth: true } },
+  // 首页 — 展示页（无需登录）
+  { path: '/', name: 'Dashboard', component: () => import('../views/Dashboard.vue') },
   // GIS 平台 — 带侧边栏
   {
     path: '/map',
     component: () => import('../views/Layout.vue'),
-    meta: { requiresAuth: true },
     children: [
       { path: '', name: 'MapView', component: () => import('../views/MapView.vue') },
       { path: 'dashboard', name: 'DataDashboard', component: () => import('../views/Dashboard.vue') },
       { path: 'products', name: 'Products', component: () => import('../views/Products.vue') },
       { path: 'knowledge', name: 'Knowledge', component: () => import('../views/Knowledge.vue') },
-      { path: 'ai', name: 'AIAssistant', component: () => import('../views/AIAssistant.vue') },
+      { path: 'ai', name: 'AIAssistant', component: () => import('../views/AIAssistant.vue'), meta: { requiresAuth: true } },
       { path: 'soil', name: 'Soil', component: () => import('../views/Soil.vue') },
-      { path: 'carbon', name: 'Carbon', component: () => import('../views/Carbon.vue') },
-      { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue') },
+      { path: 'carbon', name: 'Carbon', component: () => import('../views/Carbon.vue'), meta: { requiresAuth: true } },
+      { path: 'settings', name: 'Settings', component: () => import('../views/Settings.vue'), meta: { requiresAuth: true } },
       { path: 'help', name: 'Help', component: () => import('../views/Help.vue') },
     ],
   },
