@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_optional_user
 from app.services.carbon.carbon import CarbonService
 from app.schemas.carbon import CarbonReportCreate, CarbonReportOut, CarbonReportListOut
 
@@ -24,9 +24,11 @@ async def list_reports(
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     svc = CarbonService(db)
+    if not current_user:
+        return CarbonReportListOut(total=0, items=[])
     total, items = await svc.get_reports_by_user(current_user["sub"], offset, limit)
     return CarbonReportListOut(total=total, items=items)
 
@@ -35,12 +37,13 @@ async def list_reports(
 async def download_report_pdf(
     report_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     """下载碳汇报告 PDF（需安装 WeasyPrint 系统依赖）"""
     from app.services.carbon.pdf_report import PDFReportService  # 懒加载，避免 WeasyPrint 阻塞启动
     svc = PDFReportService(db)
-    pdf_bytes = await svc.generate(report_id, current_user["sub"])
+    user_id = current_user["sub"] if current_user else None
+    pdf_bytes = await svc.generate(report_id, user_id)
     return Response(
         content=pdf_bytes,
         media_type="application/pdf",

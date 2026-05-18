@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_optional_user
 from app.services.field import FieldService
 from app.models.field import Field
 from app.schemas.field import FieldCreate, FieldOut, FieldListOut, FieldUpdate
@@ -26,10 +26,13 @@ async def list_fields(
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     svc = FieldService(db)
-    total, items = await svc.get_fields_by_user(current_user["sub"], offset, limit)
+    if current_user:
+        total, items = await svc.get_fields_by_user(current_user["sub"], offset, limit)
+    else:
+        total, items = await svc.get_all_fields(offset, limit)
     return FieldListOut(total=total, items=items)
 
 
@@ -37,11 +40,12 @@ async def list_fields(
 async def get_field(
     field_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
-    result = await db.execute(
-        select(Field).where(Field.id == field_id, Field.user_id == current_user["sub"])
-    )
+    q = select(Field).where(Field.id == field_id)
+    if current_user:
+        q = q.where(Field.user_id == current_user["sub"])
+    result = await db.execute(q)
     field = result.scalar_one_or_none()
     if not field:
         raise HTTPException(404, "田块不存在")

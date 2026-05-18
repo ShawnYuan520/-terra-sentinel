@@ -3,7 +3,7 @@ import json
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_optional_user
 from app.core.cache import raster_cache
 from app.services.geo.postgis import PostGISSpatialService
 from app.services.gee.gee_service import GEEService
@@ -29,7 +29,7 @@ def _field_centroid(geom_text: str):
 async def get_field_info(
     field_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     svc = PostGISSpatialService(db)
     info = await svc.get_field_geom(field_id)
@@ -43,10 +43,11 @@ async def get_fields_in_viewport(
     xmin: float = Query(...), ymin: float = Query(...),
     xmax: float = Query(...), ymax: float = Query(...),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     svc = PostGISSpatialService(db)
-    return await svc.get_fields_in_viewport(xmin, ymin, xmax, ymax, current_user["sub"])
+    user_id = current_user["sub"] if current_user else None
+    return await svc.get_fields_in_viewport(xmin, ymin, xmax, ymax, user_id)
 
 
 @router.get("/ndvi/{field_id}")
@@ -54,7 +55,7 @@ async def get_ndvi_timeseries(
     field_id: str,
     days: int = Query(90, ge=7, le=365),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     # 缓存 NDVI 时序（Sentinel-2 数据更新频率低）
     cache_key = f"ndvi:{field_id}:{days}"
@@ -80,7 +81,7 @@ async def get_ndvi_timeseries(
 async def get_land_cover(
     field_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     cache_key = f"lc:{field_id}"
     cached = await raster_cache.get(cache_key)

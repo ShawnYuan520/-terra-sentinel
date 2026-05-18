@@ -25,3 +25,10 @@ class FieldService:
         cq = select(func.count()).select_from(Field).where(Field.user_id == user_id)
         total = (await self.db.execute(cq)).scalar()
         return total, items
+
+    async def get_all_fields(self, offset: int = 0, limit: int = 20):
+        q = select(Field).offset(offset).limit(limit)
+        result = await self.db.execute(q)
+        items = list(result.scalars().all())
+        total = (await self.db.execute(select(func.count()).select_from(Field))).scalar()
+        return total, items

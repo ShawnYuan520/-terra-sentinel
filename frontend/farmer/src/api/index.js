@@ -16,7 +16,10 @@ api.interceptors.response.use(
   err => {
     if (err.response?.status === 401) {
       localStorage.removeItem('token')
-      window.location.href = '/login'
+      // GET 请求不跳转登录页（公开浏览模式）
+      if (err.config?.method !== 'get') {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(err)
   }

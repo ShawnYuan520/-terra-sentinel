@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_optional_user
 from app.services.soil import SoilService
 from app.schemas.soil import SoilRecordCreate, SoilRecordOut, SoilRecommendOut
 
@@ -24,7 +24,7 @@ async def list_records(
     offset: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     svc = SoilService(db)
     _, items = await svc.get_records_by_field(field_id, offset, limit)

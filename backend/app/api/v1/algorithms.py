@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_optional_user
 from app.models.field import Field
 from app.services.raster import RasterService
 from app.services.phenology import detect_phenology, get_growth_stage_summary
@@ -22,14 +22,15 @@ router = APIRouter(prefix="/algorithms", tags=["算法服务"])
 async def full_field_analysis(
     field_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     """田块全量算法分析 — 物候+评级+碳汇+路径, 一次返回"""
 
     # 1. 获取田块
-    result = await db.execute(
-        select(Field).where(Field.id == field_id, Field.user_id == current_user["sub"])
-    )
+    q = select(Field).where(Field.id == field_id)
+    if current_user:
+        q = q.where(Field.user_id == current_user["sub"])
+    result = await db.execute(q)
     field = result.scalar_one_or_none()
     if not field:
         raise HTTPException(404, "田块不存在")
@@ -107,12 +108,13 @@ async def full_field_analysis(
 async def get_phenology(
     field_id: str,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     """CUSUM物候检测 — 从NDVI时序识别生长阶段"""
-    result = await db.execute(
-        select(Field).where(Field.id == field_id, Field.user_id == current_user["sub"])
-    )
+    q = select(Field).where(Field.id == field_id)
+    if current_user:
+        q = q.where(Field.user_id == current_user["sub"])
+    result = await db.execute(q)
     field = result.scalar_one_or_none()
     if not field:
         raise HTTPException(404, "田块不存在")

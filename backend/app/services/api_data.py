@@ -13,28 +13,18 @@
 import asyncio
 import math
 import os
-import time
 from datetime import datetime
 
 import httpx
 
+from app.core.cache import TTLCache
+
 # ── 代理配置 ──
 _PROXY = os.getenv("API_PROXY") or os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY")
 
-# ── 内存缓存 ──
-_cache: dict[str, tuple[float, object]] = {}
+# ── 内存缓存（async 安全，有最大容量和 LRU 淘汰）──
+_api_cache = TTLCache(max_size=500)
 _CACHE_TTL = 86400  # 24 小时（土壤数据变化极慢）
-
-
-def _cache_get(key: str):
-    entry = _cache.get(key)
-    if entry and time.time() - entry[0] < _CACHE_TTL:
-        return entry[1]
-    return None
-
-
-def _cache_set(key: str, value):
-    _cache[key] = (time.time(), value)
 
 
 # ── HTTP 客户端 ──
@@ -53,7 +43,7 @@ def _client() -> httpx.AsyncClient:
 async def _fetch_elevation(lon: float, lat: float) -> float | None:
     """从 Open-Meteo 获取高程（米）"""
     cache_key = f"dem:{lon:.4f}:{lat:.4f}"
-    cached = _cache_get(cache_key)
+    cached = await _api_cache.get(cache_key)
     if cached is not None:
         return cached
 
@@ -69,7 +59,7 @@ async def _fetch_elevation(lon: float, lat: float) -> float | None:
                 # API 返回列表，即使单点也是 [value]
                 val = float(elev[0] if isinstance(elev, list) else elev)
                 val = round(val, 1)
-                _cache_set(cache_key, val)
+                await _api_cache.set(cache_key, val, _CACHE_TTL)
                 return val
     except Exception:
         pass
@@ -82,7 +72,7 @@ async def _fetch_elevations_batch(points: list[tuple[float, float]]) -> dict[tup
     uncached = []
     for lon, lat in points:
         cache_key = f"dem:{lon:.4f}:{lat:.4f}"
-        cached = _cache_get(cache_key)
+        cached = await _api_cache.get(cache_key)
         if cached is not None:
             result[(lon, lat)] = cached
         else:
@@ -108,7 +98,7 @@ async def _fetch_elevations_batch(points: list[tuple[float, float]]) -> dict[tup
                     if i < len(elevs) and elevs[i] is not None:
                         val = round(float(elevs[i]), 1)
                         result[(lon, lat)] = val
-                        _cache_set(f"dem:{lon:.4f}:{lat:.4f}", val)
+                        await _api_cache.set(f"dem:{lon:.4f}:{lat:.4f}", val, _CACHE_TTL)
     except Exception:
         pass
 
@@ -175,7 +165,7 @@ _SOILGRIDS_PROPS = {
 async def _fetch_soilgrids(lon: float, lat: float) -> dict[str, float | None]:
     """从 SoilGrids 获取土壤属性（15-30cm 深度，代表 0-30cm 层）"""
     cache_key = f"soil:{lon:.4f}:{lat:.4f}"
-    cached = _cache_get(cache_key)
+    cached = await _api_cache.get(cache_key)
     if cached is not None:
         return cached
 
@@ -211,7 +201,7 @@ async def _fetch_soilgrids(lon: float, lat: float) -> dict[str, float | None]:
                     result[our_name] = round(float(val) * scale, 1)
                     break
 
-        _cache_set(cache_key, result)
+        await _api_cache.set(cache_key, result, _CACHE_TTL)
     except Exception:
         pass
 

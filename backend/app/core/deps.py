@@ -5,6 +5,7 @@ from app.core.database import get_db
 from app.core.security import decode_access_token
 
 bearer_scheme = HTTPBearer()
+optional_bearer = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
@@ -16,6 +17,15 @@ async def get_current_user(
     if payload is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token")
     return payload
+
+
+async def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(optional_bearer),
+) -> dict | None:
+    """Optional JWT – returns payload or None for public browsing."""
+    if credentials is None:
+        return None
+    return decode_access_token(credentials.credentials)
 
 
 async def get_current_admin_user(

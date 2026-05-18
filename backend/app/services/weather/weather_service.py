@@ -1,9 +1,27 @@
 """天气服务 — OpenWeather API + 模拟降级（含地理相关性）"""
 import hashlib
 import random
+import time
 import httpx
 from datetime import datetime, timezone, timedelta
 from app.core.config import get_settings
+
+# ── 服务层缓存（所有调用方共享）──
+_weather_cache: dict[str, tuple[float, object]] = {}
+_CACHE_TTL_CURRENT = 600    # 当前天气 10 分钟
+_CACHE_TTL_FORECAST = 1800  # 预报 30 分钟
+_CACHE_TTL_AGRI = 1800      # 农业气象 30 分钟
+
+
+def _cache_get(key: str):
+    entry = _weather_cache.get(key)
+    if entry and time.time() < entry[0]:
+        return entry[1]
+    return None
+
+
+def _cache_set(key: str, value, ttl: float):
+    _weather_cache[key] = (time.time() + ttl, value)
 
 
 def _lat_seeded(lat: float, lon: float, offset: str = "") -> random.Random:
@@ -52,9 +70,14 @@ class WeatherService:
 
     async def get_current_weather(self, lat: float, lon: float) -> dict:
         """当前天气"""
+        cache_key = f"current:{lat:.2f}:{lon:.2f}"
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         data = await self._ow_get("weather", {"lat": lat, "lon": lon})
         if data:
-            return {
+            result = {
                 "location": {"lat": lat, "lon": lon},
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "temperature_c": data["main"]["temp"],
@@ -69,46 +92,54 @@ class WeatherService:
                 "visibility_m": data.get("visibility", 10000),
                 "source": "OpenWeather"
             }
-
-        # 模拟降级 — 含地理季节性相关性
-        rng = _lat_seeded(lat, lon, "current")
-        month = datetime.now(timezone.utc).month
-        temp = _est_temperature(lat, lon, month) + rng.uniform(-3, 3)
-        humidity = int(50 + (45 - lat) * 2 + rng.randint(-10, 10))
-        humidity = max(30, min(95, humidity))
-
-        # 夏季多雨，冬季少雨
-        if 6 <= month <= 9:
-            precip = rng.uniform(0, 12)
-        elif month in (4, 5, 10):
-            precip = rng.uniform(0, 6)
         else:
-            precip = rng.uniform(0, 3)
+            # 模拟降级 — 含地理季节性相关性
+            rng = _lat_seeded(lat, lon, "current")
+            month = datetime.now(timezone.utc).month
+            temp = _est_temperature(lat, lon, month) + rng.uniform(-3, 3)
+            humidity = int(50 + (45 - lat) * 2 + rng.randint(-10, 10))
+            humidity = max(30, min(95, humidity))
 
-        desc = "晴"
-        if precip > 5:
-            desc = "中雨" if precip > 8 else "小雨"
-        elif humidity > 80:
-            desc = "多云" if rng.random() > 0.5 else "阴"
+            # 夏季多雨，冬季少雨
+            if 6 <= month <= 9:
+                precip = rng.uniform(0, 12)
+            elif month in (4, 5, 10):
+                precip = rng.uniform(0, 6)
+            else:
+                precip = rng.uniform(0, 3)
 
-        return {
-            "location": {"lat": lat, "lon": lon},
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "temperature_c": round(temp, 1),
-            "humidity_pct": humidity,
-            "pressure_hpa": rng.randint(1005, 1028),
-            "precipitation_mm": round(precip, 1),
-            "wind_speed_ms": round(rng.uniform(0.5, 7), 1),
-            "wind_direction_deg": rng.randint(0, 360),
-            "description": desc,
-            "icon": "01d",
-            "clouds_pct": min(100, int(humidity * 1.2)),
-            "visibility_m": rng.randint(6000, 10000),
-            "source": "simulated"
-        }
+            desc = "晴"
+            if precip > 5:
+                desc = "中雨" if precip > 8 else "小雨"
+            elif humidity > 80:
+                desc = "多云" if rng.random() > 0.5 else "阴"
+
+            result = {
+                "location": {"lat": lat, "lon": lon},
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "temperature_c": round(temp, 1),
+                "humidity_pct": humidity,
+                "pressure_hpa": rng.randint(1005, 1028),
+                "precipitation_mm": round(precip, 1),
+                "wind_speed_ms": round(rng.uniform(0.5, 7), 1),
+                "wind_direction_deg": rng.randint(0, 360),
+                "description": desc,
+                "icon": "01d",
+                "clouds_pct": min(100, int(humidity * 1.2)),
+                "visibility_m": rng.randint(6000, 10000),
+                "source": "simulated"
+            }
+
+        _cache_set(cache_key, result, _CACHE_TTL_CURRENT)
+        return result
 
     async def get_forecast(self, lat: float, lon: float, days: int = 5) -> list[dict]:
         """5 天预报（每 3 小时一个点，聚合为每日数据）"""
+        cache_key = f"forecast:{lat:.2f}:{lon:.2f}:{days}"
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         data = await self._ow_get("forecast", {"lat": lat, "lon": lon, "cnt": min(days * 8, 40)})
         if data:
             days_data: dict[str, dict] = {}
@@ -134,29 +165,35 @@ class WeatherService:
                     "wind_speed_ms": round(sum(d["wind"]) / len(d["wind"]), 1),
                     "description": max(set(d["desc"]), key=d["desc"].count),
                 })
-            return forecast
+        else:
+            # 模拟降级 — 含地理相关性
+            rng = _lat_seeded(lat, lon, "forecast")
+            now = datetime.now(timezone.utc)
+            forecast = []
+            for day_idx in range(1, days + 1):
+                date = now + timedelta(days=day_idx)
+                month = date.month
+                temp = _est_temperature(lat, lon, month) + rng.uniform(-4, 4)
+                forecast.append({
+                    "date": date.strftime("%Y-%m-%d"),
+                    "temp_max": round(temp + rng.uniform(2, 5), 1),
+                    "temp_min": round(temp - rng.uniform(3, 7), 1),
+                    "precipitation_mm": round(rng.uniform(0, 8) if 5 <= month <= 9 else rng.uniform(0, 3), 1),
+                    "humidity_pct": int(min(95, max(30, 55 + (45 - lat) * 2 + rng.randint(-15, 15)))),
+                    "wind_speed_ms": round(rng.uniform(0.5, 7), 1),
+                    "description": rng.choice(["晴", "多云", "小雨", "阴", "晴"]),
+                })
 
-        # 模拟降级 — 含地理相关性
-        rng = _lat_seeded(lat, lon, "forecast")
-        now = datetime.now(timezone.utc)
-        forecast = []
-        for day_idx in range(1, days + 1):
-            date = now + timedelta(days=day_idx)
-            month = date.month
-            temp = _est_temperature(lat, lon, month) + rng.uniform(-4, 4)
-            forecast.append({
-                "date": date.strftime("%Y-%m-%d"),
-                "temp_max": round(temp + rng.uniform(2, 5), 1),
-                "temp_min": round(temp - rng.uniform(3, 7), 1),
-                "precipitation_mm": round(rng.uniform(0, 8) if 5 <= month <= 9 else rng.uniform(0, 3), 1),
-                "humidity_pct": int(min(95, max(30, 55 + (45 - lat) * 2 + rng.randint(-15, 15)))),
-                "wind_speed_ms": round(rng.uniform(0.5, 7), 1),
-                "description": rng.choice(["晴", "多云", "小雨", "阴", "晴"]),
-            })
+        _cache_set(cache_key, forecast, _CACHE_TTL_FORECAST)
         return forecast
 
     async def get_agricultural_weather(self, lat: float, lon: float) -> dict:
         """农业气象指标 — 从天气数据推算"""
+        cache_key = f"agri:{lat:.2f}:{lon:.2f}"
+        cached = _cache_get(cache_key)
+        if cached is not None:
+            return cached
+
         current = await self.get_current_weather(lat, lon)
         temp_c = current["temperature_c"]
 
@@ -180,10 +217,12 @@ class WeatherService:
         elif temp_c < 10:
             frost_risk = "low"
 
-        return {
+        result = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "growing_degree_days": round(gdd, 1),
             "soil_moisture_percentile": current["humidity_pct"],
             "drought_risk": drought_risk,
             "frost_risk": frost_risk,
         }
+        _cache_set(cache_key, result, _CACHE_TTL_AGRI)
+        return result

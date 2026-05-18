@@ -4,7 +4,7 @@ from fastapi.responses import Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_optional_user
 from app.core.cache import raster_cache, weather_cache, cached
 from app.services.raster import RasterService, RASTER_CONFIG
 from app.schemas.raster import RasterPointOut, RasterStatsOut, SoilProfileOut
@@ -13,7 +13,7 @@ router = APIRouter(prefix="/raster", tags=["raster"])
 
 
 @router.get("/list")
-async def list_rasters(current_user: dict = Depends(get_current_user)):
+async def list_rasters(current_user: dict | None = Depends(get_optional_user)):
     svc = RasterService()
     result = {}
     for name, cfg in RASTER_CONFIG.items():
@@ -35,7 +35,7 @@ async def raster_point(
     name: str,
     lon: float = Query(...),
     lat: float = Query(...),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     if name not in RASTER_CONFIG:
         raise HTTPException(404, f"Raster layer '{name}' not found")
@@ -68,7 +68,7 @@ async def raster_tile(
 async def soil_profile(
     lon: float = Query(...),
     lat: float = Query(...),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     # 缓存栅格数据（土壤剖面是静态的，365天TTL）
     cache_key = f"soil:{lon:.4f}:{lat:.4f}"
@@ -89,7 +89,7 @@ async def agricultural_decision(
     crop: str = Query("玉米"),
     area_mu: float = Query(100),
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     """农业决策闭环：诊断→处方→预测"""
     svc = RasterService()
@@ -201,7 +201,7 @@ async def ndvi_timeline(
     lon: float = Query(...),
     lat: float = Query(...),
     years: int = Query(5, ge=1, le=10),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     """基于 DEM 推导的 NDVI 多年时间序列"""
     import math, random as _random_mod

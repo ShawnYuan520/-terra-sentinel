@@ -28,6 +28,7 @@ def _init_gee() -> bool:
     def _do_init():
         import sys
         import os
+        import tempfile
         try:
             from app.core.config import get_settings
             s = get_settings()
@@ -41,10 +42,19 @@ def _init_gee() -> bool:
                 os.environ["NO_PROXY"] = "localhost,127.0.0.1,.openweathermap.org,.bing.com,api.openweathermap.org"
                 print(f"[GEE] Using proxy: {proxy}", file=sys.stderr)
 
-            if s.GEE_SERVICE_ACCOUNT and s.GEE_KEY_FILE:
+            # 确定密钥文件路径：优先用 GEE_KEY_JSON（云端部署），否则用 GEE_KEY_FILE
+            key_file = s.GEE_KEY_FILE
+            if s.GEE_KEY_JSON:
+                tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False)
+                tmp.write(s.GEE_KEY_JSON)
+                tmp.close()
+                key_file = tmp.name
+                print(f"[GEE] Using key from GEE_KEY_JSON env var", file=sys.stderr)
+
+            if s.GEE_SERVICE_ACCOUNT and key_file:
                 creds = ee.ServiceAccountCredentials(
                     s.GEE_SERVICE_ACCOUNT,
-                    key_file=s.GEE_KEY_FILE,
+                    key_file=key_file,
                 )
                 ee.Initialize(creds, project=s.GEE_PROJECT or None)
             elif s.GEE_PROJECT:

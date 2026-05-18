@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     GEE_PROJECT: str = ""
     GEE_SERVICE_ACCOUNT: str = ""
     GEE_KEY_FILE: str = ""
+    GEE_KEY_JSON: str = ""  # 服务账号 JSON 内容（云端部署用，优先级高于 GEE_KEY_FILE）
     GEE_PROXY: str = ""  # 国内访问Google需要代理，如 http://127.0.0.1:7890
 
     # Weather API
