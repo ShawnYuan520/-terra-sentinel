@@ -303,7 +303,20 @@
         </div>
         <div class="modal-body">
           <div v-if="currentVideo?.url" class="video-player-wrap">
-            <video :src="currentVideo.url" controls autoplay class="video-player"></video>
+            <video
+              v-if="videoLoaded"
+              :src="currentVideo.url"
+              controls
+              autoplay
+              class="video-player"
+            ></video>
+            <div v-else class="video-start-screen" @click="videoLoaded = true">
+              <div class="big-play-btn">
+                <Play :size="40" />
+              </div>
+              <p>点击播放 {{ currentVideo.title }}</p>
+              <span>{{ currentVideo.desc }}</span>
+            </div>
           </div>
           <div v-else class="video-placeholder">
             <Play :size="48" />
@@ -431,15 +444,18 @@ const videoTutorials = [
 // 视频播放弹窗
 const showVideoModal = ref(false)
 const currentVideo = ref(null)
+const videoLoaded = ref(false)
 
 function openVideo(v) {
   currentVideo.value = v
+  videoLoaded.value = false
   showVideoModal.value = true
 }
 
 function closeVideoModal() {
   showVideoModal.value = false
   currentVideo.value = null
+  videoLoaded.value = false
 }
 
 const changelog = [
@@ -903,6 +919,21 @@ onMounted(async () => {
 }
 .video-placeholder p { font-size: 15px; font-weight: 600; color: #333; margin: 12px 0 4px; }
 .video-placeholder span { font-size: 13px; color: #666; }
+
+.video-start-screen {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 80px 20px; background: #0f1a14; border-radius: 8px; cursor: pointer;
+}
+.big-play-btn {
+  width: 72px; height: 72px; border-radius: 50%;
+  background: #16a34a; color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 16px; transition: transform 0.2s, background 0.2s;
+}
+.big-play-btn :deep(svg) { margin-left: 3px; }
+.video-start-screen:hover .big-play-btn { transform: scale(1.1); background: #15803d; }
+.video-start-screen p { font-size: 16px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.video-start-screen span { font-size: 13px; color: rgba(255,255,255,0.6); }
 
 /* Responsive */
 @media (max-width: 1024px) {
