@@ -146,7 +146,9 @@ onMounted(async () => {
 
     if (mRes.data?.items?.length) {
       const localMap = Object.fromEntries(fallbackMachinery.map(m => [m.id, m]))
-      machineryList.value = mRes.data.items.map(m => {
+      const apiIds = new Set()
+      const mapped = mRes.data.items.map(m => {
+        apiIds.add(m.id)
         const local = localMap[m.id]
         return {
           ...m,
@@ -158,6 +160,9 @@ onMounted(async () => {
           explodedViews: local?.explodedViews,
         }
       })
+      // 追加本地独有的项目（如带 3D 模型的切割小车）
+      const extras = fallbackMachinery.filter(m => !apiIds.has(m.id))
+      machineryList.value = [...mapped, ...extras]
     }
 
     if (sRes.data) productStats.value = sRes.data
