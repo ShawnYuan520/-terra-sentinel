@@ -54,4 +54,22 @@ export const machinery = [
     imageType: 'seeder',
     photo: '/tractor_farm.jpg',
   },
+  {
+    id: 'm-006',
+    name: 'AgriCut 秸秆切割小车 C60',
+    type: '秸秆处理机械',
+    description: '小型自走式秸秆切割设备，配备旋转刀盘和20mm喷头，适用于田间秸秆就地粉碎还田。结构紧凑，操作灵活，适合中小地块作业。',
+    specs: { power: '15 马力', width: '1.2m 切割幅宽', depth: '5-15cm 可调', speed: '3-5 km/h' },
+    suitableFor: '秸秆切割、粉碎还田、田间清理',
+    accent: '#8B5E3C',
+    imageType: 'tiller',
+    photo: '/tractor_working.jpg',
+    model3d: '/sprinkler.glb',
+    explodedViews: [
+      '/exploded-1.png',
+      '/exploded-2.png',
+      '/exploded-3.png',
+      '/exploded-4.png',
+    ],
+  },
 ]

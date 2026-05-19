@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@google/model-viewer": "^4.2.0",
     "axios": "^1.7.0",
     "echarts": "^5.5.0",
     "leaflet": "^1.9.4",
