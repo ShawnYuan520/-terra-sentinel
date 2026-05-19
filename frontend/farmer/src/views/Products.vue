@@ -105,8 +105,9 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '../api'
 import ProductImage from '../components/ProductImage.vue'
-import Model3DViewer from '../components/Model3DViewer.vue'
-import ExplodedViewGallery from '../components/ExplodedViewGallery.vue'
+import { defineAsyncComponent } from 'vue'
+const Model3DViewer = defineAsyncComponent(() => import('../components/Model3DViewer.vue'))
+const ExplodedViewGallery = defineAsyncComponent(() => import('../components/ExplodedViewGallery.vue'))
 import { decomposers as fallbackDecomposers } from '../data/decomposers.js'
 import { machinery as fallbackMachinery } from '../data/machinery.js'
 import {

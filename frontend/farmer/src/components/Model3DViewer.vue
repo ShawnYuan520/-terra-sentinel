@@ -12,6 +12,8 @@
       shadow-softness="0.8"
       exposure="1.2"
       environment-image="neutral"
+      loading="lazy"
+      reveal="auto"
       @load="isLoading = false"
       @error="hasError = true"
       style="width: 100%; height: 100%;"
