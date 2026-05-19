@@ -68,10 +68,7 @@
           <div v-for="(m, i) in machineryList" :key="m.id" :class="['showcase-row', { reverse: i % 2 === 1 }]">
             <div class="showcase-visual">
               <div class="showcase-img-wrap" :style="{ '--accent': m.accent }">
-                <div v-if="m.model3d" class="model-3d-container">
-                  <Model3DViewer :src="m.model3d" :alt="m.name" />
-                </div>
-                <div v-else class="float-product-sm">
+                <div class="float-product-sm">
                   <ProductImage :type="m.imageType" :photo="m.photo" />
                 </div>
               </div>
@@ -89,7 +86,7 @@
             </div>
           </div>
           <!-- 爆炸视图（仅当有 3D 模型的产品） -->
-          <div v-for="m in machineryWith3D" :key="'exp-' + m.id" class="exploded-section">
+          <div v-for="m in machineryWithExploded" :key="'exp-' + m.id" class="exploded-section">
             <h3 class="section-title">{{ m.name }} — 结构爆炸图</h3>
             <div class="exploded-wrap">
               <ExplodedViewGallery :images="m.explodedViews" />
@@ -106,7 +103,6 @@ import { ref, computed, onMounted } from 'vue'
 import api from '../api'
 import ProductImage from '../components/ProductImage.vue'
 import { defineAsyncComponent } from 'vue'
-const Model3DViewer = defineAsyncComponent(() => import('../components/Model3DViewer.vue'))
 const ExplodedViewGallery = defineAsyncComponent(() => import('../components/ExplodedViewGallery.vue'))
 import { decomposers as fallbackDecomposers } from '../data/decomposers.js'
 import { machinery as fallbackMachinery } from '../data/machinery.js'
@@ -121,7 +117,7 @@ const machineryList = ref(fallbackMachinery)
 const productStats = ref({ decomposer_efficiency: '42%', decomposer_days: '7天快速腐解', soc_increase: '18%' })
 
 const heroImageType = computed(() => tab.value === 'decomposer' ? 'decomposer-fast' : 'tractor')
-const machineryWith3D = computed(() => machineryList.value.filter(m => m.model3d && m.explodedViews))
+const machineryWithExploded = computed(() => machineryList.value.filter(m => m.explodedViews))
 
 const specIcons = {
   power: Gauge, width: Ruler, fuel: Fuel, nav: Navigation,
@@ -157,7 +153,6 @@ onMounted(async () => {
           photo: m.photo ?? '',
           specs: typeof m.specs === 'string' ? JSON.parse(m.specs) : (m.specs || {}),
           suitableFor: m.suitable_for ?? m.suitableFor,
-          model3d: local?.model3d,
           explodedViews: local?.explodedViews,
         }
       })
@@ -299,11 +294,6 @@ onMounted(async () => {
   font-size: 11px; font-weight: var(--weight-medium);
 }
 
-/* 3D 模型容器 */
-.model-3d-container {
-  width: 320px; height: 320px;
-}
-
 /* 爆炸视图区域 */
 .exploded-section {
   max-width: 1100px; margin: 0 auto;
@@ -326,7 +316,6 @@ onMounted(async () => {
   .hero-visual { width: 200px; height: 180px; }
   .showcase-row, .showcase-row.reverse { flex-direction: column; }
   .showcase-visual { flex: none; }
-  .model-3d-container { width: 100%; height: 280px; }
   .exploded-wrap { max-width: 100%; }
 }
 </style>
