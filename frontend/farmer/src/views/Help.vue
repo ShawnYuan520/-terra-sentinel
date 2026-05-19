@@ -302,15 +302,15 @@
           <button class="modal-close" @click="closeVideoModal"><X :size="18" /></button>
         </div>
         <div class="modal-body">
-          <div v-if="currentVideo?.url" class="video-player-wrap">
+          <div v-if="currentVideo?.url || currentVideo?.hls" class="video-player-wrap">
             <video
               v-if="videoLoaded"
-              :src="currentVideo.urlWebm || currentVideo.url"
+              ref="videoEl"
               controls
               autoplay
               class="video-player"
             ></video>
-            <div v-else class="video-start-screen" @click="videoLoaded = true">
+            <div v-else class="video-start-screen" @click="startVideo">
               <div class="big-play-btn">
                 <Play :size="40" />
               </div>
@@ -347,13 +347,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import {
   Home, Rocket, BookOpen, HelpCircle, Video, Clock, Phone,
   Search, Map, ClipboardList, BarChart3, Bot, Download,
   ChevronDown, Headphones as HeadphonesIcon, CheckCircle,
   Play, Mail, MessageCircle, X
 } from 'lucide-vue-next'
+import Hls from 'hls.js'
 import api from '../api'
 
 const activeNav = ref('home')
@@ -434,7 +435,7 @@ const quickstartGuide = [
 const faqs = ref([])
 
 const videoTutorials = [
-  { title: '平台概览', desc: '了解AgriSpatial的核心功能和界面布局', duration: '5:30', color: '#16a34a', url: '/platform-overview.mp4', urlWebm: '/platform-overview.webm' },
+  { title: '平台概览', desc: '了解AgriSpatial的核心功能和界面布局', duration: '5:30', color: '#16a34a', url: '', hls: '/platform-overview-hls/playlist.m3u8' },
   { title: '田块创建教程', desc: '手把手教你绘制和管理农田边界', duration: '8:15', color: '#3b82f6', url: '' },
   { title: 'AI 分析演示', desc: '使用AI助手进行土壤诊断和碳汇评估', duration: '12:00', color: '#8b5cf6', url: '' },
   { title: '数据导出指南', desc: '如何导出分析报告和原始数据', duration: '4:45', color: '#d97706', url: '' },
@@ -445,14 +446,46 @@ const videoTutorials = [
 const showVideoModal = ref(false)
 const currentVideo = ref(null)
 const videoLoaded = ref(false)
+const videoEl = ref(null)
+let hlsInstance = null
 
 function openVideo(v) {
   currentVideo.value = v
   videoLoaded.value = false
   showVideoModal.value = true
+  destroyHls()
+}
+
+function startVideo() {
+  videoLoaded.value = true
+  nextTick(() => {
+    const el = videoEl.value
+    if (!el) return
+    const v = currentVideo.value
+    if (v.hls && Hls.isSupported()) {
+      hlsInstance = new Hls({ maxBufferLength: 10, maxMaxBufferLength: 30 })
+      hlsInstance.loadSource(v.hls)
+      hlsInstance.attachMedia(el)
+      hlsInstance.on(Hls.Events.MANIFEST_PARSED, () => el.play())
+    } else if (v.hls && el.canPlayType('application/vnd.apple.mpegurl')) {
+      el.src = v.hls
+      el.play()
+    } else {
+      el.src = v.urlWebm || v.url
+      el.play()
+    }
+  })
+}
+
+function destroyHls() {
+  if (hlsInstance) {
+    hlsInstance.destroy()
+    hlsInstance = null
+  }
 }
 
 function closeVideoModal() {
+  destroyHls()
   showVideoModal.value = false
   currentVideo.value = null
   videoLoaded.value = false
