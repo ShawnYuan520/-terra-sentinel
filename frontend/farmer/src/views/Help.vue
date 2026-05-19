@@ -421,7 +421,7 @@ const quickstartGuide = [
 const faqs = ref([])
 
 const videoTutorials = [
-  { title: '平台概览', desc: '了解AgriSpatial的核心功能和界面布局', duration: '5:30', color: '#16a34a', url: '' },
+  { title: '平台概览', desc: '了解AgriSpatial的核心功能和界面布局', duration: '5:30', color: '#16a34a', url: '/platform-overview.mp4' },
   { title: '田块创建教程', desc: '手把手教你绘制和管理农田边界', duration: '8:15', color: '#3b82f6', url: '' },
   { title: 'AI 分析演示', desc: '使用AI助手进行土壤诊断和碳汇评估', duration: '12:00', color: '#8b5cf6', url: '' },
   { title: '数据导出指南', desc: '如何导出分析报告和原始数据', duration: '4:45', color: '#d97706', url: '' },
