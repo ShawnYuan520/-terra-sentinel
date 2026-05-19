@@ -64,7 +64,7 @@ export const machinery = [
     accent: '#8B5E3C',
     imageType: 'tiller',
     photo: '/tractor_working.jpg',
-    model3d: '/sprinkler.glb',
+    model3d: '/cutting_machine.glb',
     explodedViews: [
       '/exploded-1.png',
       '/exploded-2.png',
