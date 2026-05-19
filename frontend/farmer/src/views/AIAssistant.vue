@@ -17,6 +17,9 @@
         </select>
       </div>
       <div class="topbar-right">
+        <span :class="['status-chip', aiStatus.available ? 'online' : 'offline']" :title="aiStatus.available ? `AI 模型: ${aiStatus.model}` : (aiStatus.api_key_set ? 'API 调用失败，已降级为规则模式' : '未配置 API Key，使用规则模式')">
+          <span class="dot"></span>{{ aiStatus.available ? 'AI 就绪' : '规则模式' }}
+        </span>
         <span class="status-chip online"><span class="dot"></span>GIS 已连接</span>
         <span class="status-chip"><Satellite :size="12" /> 遥感图层</span>
         <span class="status-chip"><Clock :size="12" /> {{ currentTime }}</span>
@@ -33,7 +36,8 @@
           <div class="chat-empty" v-if="!messages.length && !loading">
             <div class="empty-icon"><Sparkles :size="32" /></div>
             <h3>AI 农业分析助手</h3>
-            <p>选择田块后，AI 将自动加载土壤、天气数据，结合卫星遥感进行专业分析</p>
+            <p v-if="aiStatus.available">选择田块后，AI 将自动加载土壤、天气数据，结合卫星遥感进行专业分析</p>
+            <p v-else>当前为规则引擎模式。选择田块后，可使用预设分析功能。配置 DeepSeek API Key 可获得更智能的对话体验。</p>
             <div class="empty-prompts">
               <button v-for="p in quickPrompts" :key="p.type" class="prompt-chip" @click="quickAnalyze(p.type)" :disabled="!selectedFieldId">
                 <component :is="p.icon" :size="14" /> {{ p.label }}
@@ -161,6 +165,7 @@ const messagesRef = ref(null)
 const currentTime = ref('')
 const thinkText = ref('正在分析遥感数据...')
 const platformStats = ref({ today_operation_mu: 0, total_carbon_tco2e: 0, machinery_online: 0 })
+const aiStatus = ref({ available: false, model: null, mode: 'rule-based' })
 
 const selectedField = computed(() => fields.value.find(f => f.id === selectedFieldId.value))
 
@@ -189,6 +194,7 @@ onMounted(async () => {
   setInterval(updateTime, 60000)
   try { const { data } = await api.get('/fields'); fields.value = data.items || [] } catch {}
   try { const { data } = await api.get('/platform/stats'); if (data) platformStats.value = data } catch {}
+  try { const { data } = await api.get('/agent/status'); if (data) aiStatus.value = data } catch {}
 })
 
 watch(selectedFieldId, async (id) => {
@@ -310,7 +316,9 @@ function formatReply(text) {
   background: #f5f5f5;
 }
 .status-chip.online { color: #16a34a; }
+.status-chip.offline { color: #D97706; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: #22C55E; box-shadow: 0 0 6px rgba(34,197,94,0.4); }
+.status-chip.offline .dot { background: #D97706; box-shadow: 0 0 6px rgba(217,119,6,0.4); }
 
 /* 主体 */
 .ws-main { flex: 1; display: flex; position: relative; z-index: 1; overflow: hidden; }

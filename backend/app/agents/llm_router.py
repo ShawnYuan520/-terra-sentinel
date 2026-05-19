@@ -114,7 +114,7 @@ class AgentRouter:
         try:
             from app.models.ai_agent_log import AIAgentLog
             log = AIAgentLog(
-                user_id=current_user.get("sub") if current_user else None,
+                user_id=current_user.get("sub") if isinstance(current_user, dict) else None,
                 field_id=field_id,
                 agent_type="chat",
                 prompt=user_message,

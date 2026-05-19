@@ -4,11 +4,26 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from pydantic import BaseModel, Field
 from app.core.database import get_db, AsyncSessionLocal
-from app.core.deps import get_current_user
+from app.core.deps import get_current_user, get_optional_user
 from app.core.security import decode_access_token
 from app.agents.llm_router import AgentRouter
 
 router = APIRouter(prefix="/agent", tags=["AI 助手"])
+
+
+@router.get("/status")
+async def agent_status():
+    """AI 服务状态检查"""
+    from app.services.providers.router import get_provider
+    from app.core.config import get_settings
+    provider = get_provider()
+    settings = get_settings()
+    return {
+        "available": provider is not None,
+        "model": provider.model_name if provider else None,
+        "mode": "llm" if provider else "rule-based",
+        "api_key_set": bool(settings.DEEPSEEK_API_KEY),
+    }
 
 
 class AgentChatRequest(BaseModel):
@@ -24,11 +39,16 @@ class AgentChatResponse(BaseModel):
 async def agent_chat(
     data: AgentChatRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: dict = Depends(get_current_user),
+    current_user: dict | None = Depends(get_optional_user),
 ):
     agent = AgentRouter()
-    reply = await agent.chat(data.message, data.field_id, db, current_user)
-    return AgentChatResponse(reply=reply or "抱歉，暂时无法处理您的请求")
+    try:
+        reply = await agent.chat(data.message, data.field_id, db, current_user)
+        return AgentChatResponse(reply=reply or "抱歉，暂时无法处理您的请求")
+    except Exception as e:
+        # DeepSeek API 失败时降级到规则引擎
+        fallback = await agent._rule_based(data.message, data.field_id, db)
+        return AgentChatResponse(reply=fallback)
 
 
 @router.websocket("/ws")
